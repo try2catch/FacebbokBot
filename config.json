@@ -1,0 +1,6 @@
+{
+  "driver": "<Path of chrome driver>",
+  "url": "https://www.facebook.com",
+  "username": "<Facebook username>",
+  "password": "<Facebook Password>"
+}
