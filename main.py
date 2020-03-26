@@ -11,5 +11,6 @@ if __name__ == '__main__':
     username = config['username']
     password = config['password']
 
+    friends = '<facebook_id>'
     fb = facebook_bot(driver, url, username, password)
     fb.post_on_wall('I am you Bot.')
