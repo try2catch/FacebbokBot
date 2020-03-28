@@ -36,6 +36,16 @@ class facebook_bot():
         self.driver.quit()
         sys.exit()
 
+    def isFriend(self):
+        try:
+            WebDriverWait(self.driver, 10).until(
+                EC.element_to_be_clickable((By.LINK_TEXT, 'send him a friend request.')))
+            return False
+        except TimeoutException:
+            return True
+        except Exception as e:
+            self.show_exception(e)
+
     def login(self, username, password):
         try:
             email_box = self.driver.find_element_by_id('email')
@@ -52,18 +62,18 @@ class facebook_bot():
             self.show_exception(e)
 
     def post_on_wall(self, message):
-
+        url = 'http://www.facebook.com/{}'
         if self.friends:
             if type(self.friends) == str:
-                self.driver.get('http://www.facebook.com/{}'.format(self.friends))
+                self.driver.get(url.format(self.friends))
                 self.post_message(message)
             if type(self.friends) == dict:
                 for key, value in self.friends.items():
-                    self.driver.get('http://www.facebook.com/{}'.format(key))
+                    self.driver.get(url.format(key))
                     self.post_message(message)
             elif type(self.friends) == list:
                 for friend in self.friends:
-                    self.driver.get('http://www.facebook.com/{}'.format(friend))
+                    self.driver.get(url.format(friend))
                     self.post_message(message)
         else:
             self.post_message(message)
@@ -71,21 +81,24 @@ class facebook_bot():
         self.driver.close()
 
     def post_message(self, message):
-        try:
-            if self.friends:
-                post_box = self.driver.find_element_by_class_name('_1mf')
-                btn_xpath = '//button[@class="_1mf7 _4jy0 _4jy3 _4jy1 _51sy selected _42ft"]'
-            else:
-                post_box = self.driver.find_element_by_tag_name('textarea')
-                btn_xpath = '//button[@class="_1mf7 _4r1q _4jy0 _4jy3 _4jy1 _51sy selected _42ft"]'
+        if self.isFriend():
+            try:
+                if self.friends:
+                    post_box = self.driver.find_element_by_class_name('_1mf')
+                    btn_xpath = '//button[@class="_1mf7 _4jy0 _4jy3 _4jy1 _51sy selected _42ft"]'
+                else:
+                    post_box = self.driver.find_element_by_tag_name('textarea')
+                    btn_xpath = '//button[@class="_1mf7 _4r1q _4jy0 _4jy3 _4jy1 _51sy selected _42ft"]'
 
-            post_box.send_keys(message)
+                post_box.send_keys(message)
 
-            post_btn = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, btn_xpath)))
-            post_btn.click()
-        except NoSuchElementException as e:
-            self.show_exception(e)
-        except Exception as e:
-            self.show_exception(e)
+                post_btn = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, btn_xpath)))
+                post_btn.click()
+            except NoSuchElementException as e:
+                self.show_exception(e)
+            except Exception as e:
+                self.show_exception(e)
 
-        time.sleep(5)
+            time.sleep(5)
+        else:
+            print('The given user id is not into your friend list.')
