@@ -15,7 +15,7 @@ class facebook_bot():
 
         prefs = {"profile.default_content_setting_values.notifications": 2}
         options.add_experimental_option("prefs", prefs)
-        options.add_argument('--user-data-dir=/Users/akhileshsingh/Library/Application Support/Google/Chrome/Default')
+        options.add_argument('--user-data-dir=<Put your Chrome App Data dir>')
         options.add_argument('--profile-directory=Default')
 
         self.driver = webdriver.Chrome(driver, chrome_options=options)
