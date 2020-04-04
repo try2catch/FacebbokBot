@@ -9,29 +9,21 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 
 class facebook_bot():
-    def __init__(self, driver, url, username, password, friends=None):
 
-        # driver: Webdriver path
-        # url: Facebook site
-        # username: Facebook username
-        # password: Facebook password
-        # friends: friends: If it's None, the message will port on User's wall.
-        # If not, then it will post to the given ids wall.
-        # This can be a string, list and dictionary.
-
+    def __init__(self, driver, website, username, password, friends=None):
         options = webdriver.ChromeOptions()
 
         prefs = {"profile.default_content_setting_values.notifications": 2}
         options.add_experimental_option("prefs", prefs)
-        options.add_argument('--user-data-dir=<Put your Chrome App Data dir>')
+        options.add_argument('--user-data-dir=/Users/akhileshsingh/Library/Application Support/Google/Chrome/Default')
         options.add_argument('--profile-directory=Default')
 
-        self.driver = webdriver.Chrome(driver, options=options)
-        self.driver.get(url)
+        self.driver = webdriver.Chrome(driver, chrome_options=options)
+        self.driver.get(website)
         self.friends = friends
-        self.login(username, password)
+        self.login(username=username, password=password)
 
-    def show_exception(self, e):
+    def show_exceptions(self, e):
         print(e)
         self.driver.quit()
         sys.exit()
@@ -48,57 +40,83 @@ class facebook_bot():
 
     def login(self, username, password):
         try:
-            email_box = self.driver.find_element_by_id('email')
-            email_box.send_keys(username)
+            email_text = self.driver.find_element_by_id('email')
+            email_text.send_keys(username)
 
-            pass_box = self.driver.find_element_by_id('pass')
-            pass_box.send_keys(password)
+            pass_text = self.driver.find_element_by_id('pass')
+            pass_text.send_keys(password)
 
-            login_btn = self.driver.find_element_by_id('loginbutton')
-            login_btn.click()
+            pass_text = self.driver.find_element_by_id('loginbutton')
+            pass_text.click()
         except NoSuchElementException as e:
-            self.show_exception(e)
+            self.show_exceptions(e)
         except Exception as e:
-            self.show_exception(e)
+            self.show_exceptions(e)
 
-    def post_on_wall(self, message):
-        url = 'http://www.facebook.com/{}'
+    def post_on_wall(self, message=None, media=None):
+        url = 'https://www.facebook.com/{}'
+
         if self.friends:
             if type(self.friends) == str:
                 self.driver.get(url.format(self.friends))
-                self.post_message(message)
-            if type(self.friends) == dict:
+                self.post_message(message, media=media)
+
+            elif type(self.friends) == dict:
                 for key, value in self.friends.items():
                     self.driver.get(url.format(key))
-                    self.post_message(message)
+                    self.post_message(message=message, media=media)
+
             elif type(self.friends) == list:
-                for friend in self.friends:
-                    self.driver.get(url.format(friend))
-                    self.post_message(message)
+                for id in self.friends:
+                    self.driver.get(url.format(id))
+                    self.post_message(message, media=media)
         else:
-            self.post_message(message)
+            self.post_message(message, media=media)
 
         self.driver.close()
 
-    def post_message(self, message):
-        if self.isFriend():
-            try:
-                if self.friends:
-                    post_box = self.driver.find_element_by_class_name('_1mf')
-                    btn_xpath = '//button[@class="_1mf7 _4jy0 _4jy3 _4jy1 _51sy selected _42ft"]'
-                else:
-                    post_box = self.driver.find_element_by_tag_name('textarea')
-                    btn_xpath = '//button[@class="_1mf7 _4r1q _4jy0 _4jy3 _4jy1 _51sy selected _42ft"]'
+    def post_media(self, media):
+        media_type = type(media)
+        if media_type == list:
+            for m in media:
+                image_box = self.driver.find_element_by_xpath('//input[@type="file"]')
+                image_box.send_keys(m)
+        elif media_type == str:
+            image_box = self.driver.find_element_by_xpath('//input[@type="file"]')
+            image_box.send_keys(media)
 
-                post_box.send_keys(message)
-
-                post_btn = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, btn_xpath)))
-                post_btn.click()
-            except NoSuchElementException as e:
-                self.show_exception(e)
-            except Exception as e:
-                self.show_exception(e)
-
-            time.sleep(5)
+    def post_message(self, message=None, media=None):
+        if self.friends is None:
+            post_box = self.driver.find_element_by_tag_name('textarea')
         else:
-            print('The given user id is not into your friend list.')
+            if self.isFriend():
+                post_box = self.driver.find_element_by_class_name('_1mf')
+            else:
+                print('Not able to post. Please check friend status.')
+
+        if message:
+            post_box.send_keys(message)
+
+        else:
+            post_box.click()
+            time.sleep(10)
+
+        if media:
+            self.post_media(media)
+
+        try:
+            if self.friends is None:
+                btn_xpath = "//button[@class='_1mf7 _4r1q _4jy0 _4jy3 _4jy1 _51sy selected _42ft']"
+            else:
+                btn_xpath = "//button[@class='_1mf7 _4jy0 _4jy3 _4jy1 _51sy selected _42ft']"
+
+            post_btn = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, btn_xpath)))
+            post_btn.click()
+
+        except NoSuchElementException as e:
+            self.show_exceptions(e)
+        except Exception as e:
+            self.show_exceptions(e)
+
+        time.sleep(5)
